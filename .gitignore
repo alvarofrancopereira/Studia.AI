@@ -5,66 +5,53 @@ node_modules/
 # Build outputs
 dist/
 build/
-target/
-
-# Logs
-*.log
+.next/
+out/
 
 # Environment variables
 .env
 .env.local
 *.env.*
 
-# IDE specific
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
-
-# Python related
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-*.so
-.coverage
-coverage/
-htmlcov/
 
-# Testing
-.nyc_output/
-coverage/
-junit.xml
-*.tap
+# Logs
+*.log
 
-# Distribution / packaging
-.pytest_cache/
-.mypy_cache/
-.tox/
-.eggs/
-*.egg-info/
-.installed.cfg
-*.egg
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# OS generated files
+# OS files
 .DS_Store
 Thumbs.db
 
-# Compiled JavaScript
-*.js.map
-*.jsx.map
-*.ts.map
-*.tsx.map
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
 
-# Vim
-*.un~
-Session.vim
+# Temporary files
+*.tmp
+*.temp
 
-# Zip archives
-*.zip
-*.tar.gz
-*.tar.xz
-*.tar.bz2
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Authentication and sessions
+sessions/
+.next-auth/
 ```
