@@ -85,7 +85,6 @@ export const authConfig: NextAuthConfig = {
       return true
     },
   },
-  providers: [],
   events: {
     async signOut({ token }) {
       // Optionally invalidate session on sign out

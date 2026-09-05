@@ -1,5 +1,5 @@
 import NextAuth from "next-auth"
-import { authConfig } from "./api/auth/[...nextauth]/route"
+import { authConfig } from "@/app/api/auth/[...nextauth]/route"
 
 export const middleware = NextAuth(authConfig)
 
