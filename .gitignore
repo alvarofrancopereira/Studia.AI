@@ -6,6 +6,7 @@ node_modules/
 dist/
 build/
 .next/
+out/
 
 # Environment variables
 .env
@@ -21,18 +22,35 @@ __pycache__/
 env/
 venv/
 .venv/
-.ENV
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+.MF
+tags
+TAGS
+ID
+GTAGS
+GRTAGS
+GSYMS
+GPATH
+.DS_Store
+Thumbs.db
 
 # Logs
 *.log
 
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
+# OS generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -40,17 +58,4 @@ venv/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-
-# Prisma
-prisma/migrations/
-*.db
-*.db-journal
-
-# Coverage
-coverage/
-.nyc_output/
 ```
