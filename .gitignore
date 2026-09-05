@@ -26,7 +26,13 @@ venv/
 # Logs
 *.log
 
-# OS generated files
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
 .DS_Store
 .DS_Store?
 ._*
