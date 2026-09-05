@@ -33,8 +33,56 @@ export type LoginInput = z.infer<typeof loginSchema>
 // Security Constants
 // ============================================
 
-const MAX_FAILED_ATTEMPTS = 5
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000 // 15 minutes
+export const MAX_FAILED_ATTEMPTS = 5
+export const LOCKOUT_DURATION_MS = 15 * 60 * 1000 // 15 minutes
+
+// ============================================
+// Helper Functions (exported for testing)
+// ============================================
+
+/**
+ * Check if an account is currently locked
+ */
+export function isAccountLocked(lockedUntil: Date | null): boolean {
+  if (!lockedUntil) return false
+  return lockedUntil > new Date()
+}
+
+/**
+ * Get the lockout expiry time (15 minutes from now)
+ */
+export function getLockoutExpiryTime(): Date {
+  return new Date(Date.now() + LOCKOUT_DURATION_MS)
+}
+
+/**
+ * Sanitize error messages to prevent information leakage
+ */
+export function sanitizeError(error: Error): string {
+  const message = error.message.toLowerCase()
+  
+  // Database-related errors (e.g., unique constraint violations)
+  if (message.includes("already exists") || 
+      message.includes("unique constraint")) {
+    return "An error occurred. Please try again."
+  }
+  
+  // Validation errors that might reveal system details
+  if (message.includes("requirements") || 
+      message.includes("validation")) {
+    return "An error occurred. Please try again."
+  }
+  
+  // Authentication errors - keep generic for anti-enumeration
+  if (message.includes("credentials") || 
+      message.includes("password") || 
+      message.includes("email")) {
+    return "Invalid credentials"
+  }
+  
+  // Default: return original message for operational errors
+  return error.message
+}
 
 // ============================================
 // Authentication Functions

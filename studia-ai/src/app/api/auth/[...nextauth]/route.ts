@@ -51,8 +51,8 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.id = user.id
-        token.securityStamp = user.securityStamp
+        token.id = user.id ?? token.id
+        token.securityStamp = user.securityStamp ?? token.securityStamp
       }
       
       // Handle session updates
@@ -64,8 +64,8 @@ export const authConfig: NextAuthConfig = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string
-        session.user.securityStamp = token.securityStamp as string
+        session.user.id = token.id ?? session.user.id
+        session.user.securityStamp = token.securityStamp ?? session.user.securityStamp
       }
       return session
     },
@@ -86,12 +86,12 @@ export const authConfig: NextAuthConfig = {
     },
   },
   events: {
-    async signOut({ token }) {
+    async signOut(message) {
       // Optionally invalidate session on sign out
-      if (token.id) {
+      if ('token' in message && message.token?.id) {
         await prisma.session.deleteMany({
           where: {
-            userId: token.id as string,
+            userId: message.token.id as string,
           },
         }).catch(() => {
           // Ignore errors during sign out

@@ -1,9 +1,26 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import argon2 from "argon2"
-import { z } from "zod"
 
-// Mock prisma client
-const mockPrisma = {
+interface MockPrisma {
+  user: {
+    findUnique: ReturnType<typeof vi.fn>
+    create: ReturnType<typeof vi.fn>
+    update: ReturnType<typeof vi.fn>
+  }
+  verificationToken: {
+    upsert: ReturnType<typeof vi.fn>
+    findUnique: ReturnType<typeof vi.fn>
+    delete: ReturnType<typeof vi.fn>
+  }
+  session: {
+    deleteMany: ReturnType<typeof vi.fn>
+  }
+  $connect: ReturnType<typeof vi.fn>
+  $disconnect: ReturnType<typeof vi.fn>
+}
+
+// Mock the entire @/lib/db module
+const mockPrisma: MockPrisma = {
   user: {
     findUnique: vi.fn(),
     create: vi.fn(),
@@ -14,10 +31,16 @@ const mockPrisma = {
     findUnique: vi.fn(),
     delete: vi.fn(),
   },
+  session: {
+    deleteMany: vi.fn(),
+  },
+  $connect: vi.fn(),
+  $disconnect: vi.fn(),
 }
 
 vi.mock("@/lib/db", () => ({
   prisma: mockPrisma,
+  default: mockPrisma,
 }))
 
 // Import after mocking
