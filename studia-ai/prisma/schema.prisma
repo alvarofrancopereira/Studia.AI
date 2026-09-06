@@ -1,0 +1,476 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// STUDIA AI - Database Schema
+// ============================================
+
+// User authentication and profile
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
+  securityStamp String    @default(cuid()) @unique
+  failedLoginAttempts Int @default(0)
+  lockedUntil   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  profile       Profile?
+  goals         Goal[]
+  studyPlans    StudyPlan[]
+  achievements  UserAchievement[]
+  notifications Notification[]
+  aiInteractions AIInteraction[]
+  uploadedMaterials UploadedMaterial[]
+  
+  // Relations for study activities
+  studySessions StudySession[]
+  quizAttempts  QuizAttempt[]
+  flashcardReviews FlashcardReview[]
+  masteryRecords UserTopicMastery[]
+  accounts      Account[]
+  sessions      Session[]
+  
+  @@index([email])
+  @@map("users")
+}
+
+model Profile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak   Int      @default(0)
+  longestStreak   Int      @default(0)
+  totalXP         Int      @default(0)
+  level           Int      @default(1)
+  timezone        String?  @default("UTC")
+  preferences     Json?    // User preferences (theme, notifications, etc.)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@map("profiles")
+}
+
+// Subject and Topic structure
+model Subject {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String?  // For UI visualization
+  icon        String?  // Icon identifier
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  topics      Topic[]
+  
+  @@index([name])
+  @@map("subjects")
+}
+
+model Topic {
+  id          String   @id @default(uuid())
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      Topic?   @relation("TopicHierarchy", fields: [parentId], references: [id])
+  children    Topic[]  @relation("TopicHierarchy")
+  name        String
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  questions       Question[]
+  quizzes         QuizQuestion[]
+  flashcards      Flashcard[]
+  puzzles         Puzzle[]
+  masteryRecords  UserTopicMastery[]
+  
+  @@index([subjectId])
+  @@index([parentId])
+  @@index([subjectId, parentId])
+  @@map("topics")
+}
+
+// Questions system
+model Question {
+  id          String   @id @default(uuid())
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  content     String   // Question text
+  difficulty  String   @default("medium") // easy, medium, hard
+  questionType String  @default("multiple_choice") // multiple_choice, true_false, short_answer, open_ended, matching, ordering
+  explanation String?  // Explanation for the correct answer
+  tags        String[] // Tags for categorization
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  options     QuestionOption[]
+  
+  @@index([topicId])
+  @@index([difficulty])
+  @@index([questionType])
+  @@map("questions")
+}
+
+model QuestionOption {
+  id          String   @id @default(uuid())
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  content     String
+  isCorrect   Boolean  @default(false)
+  order       Int      @default(0)
+  explanation String?  // Specific explanation for this option
+  createdAt   DateTime @default(now())
+  
+  @@index([questionId])
+  @@map("question_options")
+}
+
+// Quiz system
+model Quiz {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  topicIds    String[] // Topics included in this quiz
+  difficulty  String   @default("medium")
+  timeLimit   Int?     // Time limit in seconds
+  passingScore Int     @default(70) // Percentage required to pass
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  attempts    QuizAttempt[]
+  questions   QuizQuestion[]
+  
+  @@index([difficulty])
+  @@map("quizzes")
+}
+
+model QuizAttempt {
+  id          String   @id @default(uuid())
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score       Int      // Percentage score
+  totalQuestions Int
+  correctAnswers Int
+  timeSpent   Int      // Time spent in seconds
+  completedAt DateTime @default(now())
+  passed      Boolean
+  
+  @@index([userId])
+  @@index([quizId])
+  @@index([userId, completedAt])
+  @@map("quiz_attempts")
+}
+
+model QuizQuestion {
+  id          String   @id @default(uuid())
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questionId  String?  // Can reference existing question or be custom
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  
+  @@index([quizId])
+  @@index([topicId])
+  @@map("quiz_questions")
+}
+
+// Study sessions and activities
+model StudySession {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId     String?
+  activityType String // puzzle, question, flashcard, explanation, simulation
+  duration    Int      // Duration in seconds
+  completed   Boolean  @default(false)
+  performance Json?    // Performance metrics
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("study_sessions")
+}
+
+model StudyActivity {
+  id          String   @id @default(uuid())
+  sessionId   String
+  type        String   // question_answered, puzzle_completed, flashcard_reviewed, etc.
+  data        Json     // Activity-specific data
+  result      String?  // success, failure, partial
+  createdAt   DateTime @default(now())
+  
+  @@index([sessionId])
+  @@map("study_activities")
+}
+
+// Mastery tracking
+model UserTopicMastery {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  masteryLevel Float    @default(0) // 0-100 percentage
+  accuracy    Float    @default(0) // Historical accuracy
+  consistency Float    @default(0) // Consistency metric
+  recency     Float    @default(0) // Recency factor
+  lastStudied DateTime?
+  reviewCount Int      @default(0)
+  correctCount Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, topicId])
+  @@index([userId])
+  @@index([topicId])
+  @@map("user_topic_mastery")
+}
+
+// Goals and study plans
+model Goal {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId   String?
+  targetType  String   // mastery, exam, learning, review
+  targetValue Float    // Target mastery percentage or score
+  currentValue Float   @default(0)
+  deadline    DateTime?
+  dailyTime   Int?     // Daily study time in minutes
+  status      String   @default("active") // active, completed, paused, abandoned
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@map("goals")
+}
+
+model StudyPlan {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goalId      String?
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  dailyTime   Int      // Recommended daily time in minutes
+  priorities  Json?    // Priority topics with reasoning
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@map("study_plans")
+}
+
+// Flashcards with spaced repetition
+model Flashcard {
+  id          String   @id @default(uuid())
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  front       String   // Question/prompt
+  back        String   // Answer
+  hints       String[] // Optional hints
+  tags        String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  reviews     FlashcardReview[]
+  
+  @@index([topicId])
+  @@map("flashcards")
+}
+
+model FlashcardReview {
+  id          String   @id @default(uuid())
+  flashcardId String
+  flashcard   Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating      Int      // 1-4: Forgot, Hard, Good, Easy
+  interval    Int      // Next review interval in days
+  dueDate     DateTime // Next review due date
+  easeFactor  Float    @default(2.5) // SM-2 ease factor
+  streak      Int      @default(0) // Consecutive correct reviews
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([dueDate])
+  @@index([flashcardId])
+  @@map("flashcard_reviews")
+}
+
+// Puzzles
+model Puzzle {
+  id          String   @id @default(uuid())
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  puzzleType  String   // completion, ordering, matching, true_false, find_error, find_premise, choose_conclusion, relate_concepts, classification
+  content     Json     // Puzzle content (structure depends on type)
+  solution    Json     // Solution data
+  difficulty  String   @default("medium")
+  explanation String?
+  timeEstimate Int?    // Estimated time in seconds
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([topicId])
+  @@index([puzzleType])
+  @@map("puzzles")
+}
+
+// Gamification
+model Achievement {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  icon        String?
+  category    String   // milestone, streak, mastery, speed, consistency
+  requirement Json     // Requirements to unlock
+  xpReward    Int      @default(0)
+  createdAt   DateTime @default(now())
+  
+  userAchievements UserAchievement[]
+  
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt  DateTime @default(now())
+  
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}
+
+// Notifications
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // reminder, achievement, update, system
+  title       String
+  message     String
+  read        Boolean  @default(false)
+  actionUrl   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([read])
+  @@map("notifications")
+}
+
+// AI interactions logging
+model AIInteraction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // question_generation, explanation, flashcard_generation, puzzle_generation, study_plan, analysis
+  input       String   // User input/context
+  output      String   // AI response
+  tokensUsed  Int?
+  provider    String   // ollama, openai, gemini, etc.
+  model       String?  // Model used
+  success     Boolean  @default(true)
+  error       String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([type])
+  @@map("ai_interactions")
+}
+
+// Uploaded materials
+model UploadedMaterial {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName    String
+  originalName String
+  mimeType    String
+  size        Int      // File size in bytes
+  storagePath String   // Path in storage
+  status      String   @default("processing") // processing, ready, error
+  processedContent String? // Extracted text content
+  errorMessage String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@map("uploaded_materials")
+}
+
+// NextAuth models for database adapter
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}

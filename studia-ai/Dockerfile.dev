@@ -1,0 +1,30 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies for Playwright
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/tmp/playwright-browsers
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV CHROME_BIN=/usr/bin/chromium-browser
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy prisma schema and generate client
+COPY prisma ./prisma
+RUN npx prisma generate
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]
