@@ -2,7 +2,17 @@ import { PrismaClient } from "@prisma/client"
 import argon2 from "argon2"
 import { z } from "zod"
 
-const prisma = new PrismaClient()
+// Allow Prisma client to be mocked for tests
+declare global {
+   
+  var prisma: PrismaClient | undefined
+}
+
+const prisma = global.prisma || new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') {
+  global.prisma = prisma
+}
 
 // ============================================
 // Validation Schemas

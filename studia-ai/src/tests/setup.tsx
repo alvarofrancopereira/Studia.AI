@@ -26,3 +26,31 @@ vi.mock('next/image', () => ({
     return <img {...props} alt="" />
   }),
 }))
+
+// Mock Prisma client for unit tests
+vi.mock('@/lib/db', () => {
+  const mockPrisma = {
+    user: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    session: {
+      create: vi.fn(),
+      delete: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    verificationToken: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      delete: vi.fn(),
+    },
+    $transaction: vi.fn(async (cb) => {
+      if (typeof cb === 'function') {
+        return cb(mockPrisma)
+      }
+      return Promise.all(cb)
+    }),
+  }
+  return { default: mockPrisma }
+})
