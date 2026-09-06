@@ -1,18 +1,6 @@
-import { PrismaClient } from "@prisma/client"
 import argon2 from "argon2"
 import { z } from "zod"
-
-// Allow Prisma client to be mocked for tests
-declare global {
-   
-  var prisma: PrismaClient | undefined
-}
-
-const prisma = global.prisma || new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma
-}
+import { prisma } from "@/lib/db"
 
 // ============================================
 // Validation Schemas
@@ -366,18 +354,8 @@ export async function requestPasswordReset(email: string) {
  * Reset password with token
  */
 export async function resetPassword(email: string, token: string, newPassword: string) {
-  // Validate new password
-  const result = registerSchema.safeParse({ 
-    name: "x", 
-    email: "x@x.com", 
-    password: newPassword 
-  })
-  
-  if (!result.success) {
-    throw new Error("Password does not meet requirements")
-  }
-
-  // Verify token
+  // Verify token FIRST - before validating password
+  // This prevents leaking information about password requirements with invalid tokens
   const verificationToken = await prisma.verificationToken.findUnique({
     where: {
       identifier_token: {
@@ -389,6 +367,20 @@ export async function resetPassword(email: string, token: string, newPassword: s
 
   if (!verificationToken || verificationToken.expires < new Date()) {
     throw new Error("Invalid or expired reset token")
+  }
+
+  // Validate new password ONLY (not name/email which are not relevant here)
+  const passwordSchema = z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character")
+  
+  const result = passwordSchema.safeParse(newPassword)
+  
+  if (!result.success) {
+    throw new Error("Password does not meet requirements")
   }
 
   const user = await prisma.user.findUnique({

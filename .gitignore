@@ -2,17 +2,6 @@
 # Dependencies
 node_modules/
 
-# Build outputs
-dist/
-build/
-.next/
-out/
-
-# Environment variables
-.env
-.env.local
-.env.*
-
 # Python
 __pycache__/
 *.pyc
@@ -22,28 +11,31 @@ __pycache__/
 env/
 venv/
 .venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
+.ENV
+.ENV.*
+.venv/
+.venv.*
+.conda/
+.mypy_cache/
+.pytest_cache/
 .coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
+coverage/
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.eggs/
 
 # Logs
 *.log
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Environment variables
+.env
+.env.local
+.env.*
+!.env.example
 
 # IDE
 .vscode/
@@ -51,15 +43,26 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.DS_Store
+Thumbs.db
 
 # Testing
 coverage/
 htmlcov/
 .pytest_cache/
-.mypy_cache/
-*.egg-info/
+.hypothesis/
 
-# Temporary files
-*.tmp
-*.temp
+# Distribution / packaging
+*.tar.gz
+*.whl
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local configuration
+.settings/
+*.local
 ```

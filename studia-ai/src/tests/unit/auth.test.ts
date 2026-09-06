@@ -1,46 +1,25 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import argon2 from "argon2"
 
-interface MockPrisma {
-  user: {
-    findUnique: ReturnType<typeof vi.fn>
-    create: ReturnType<typeof vi.fn>
-    update: ReturnType<typeof vi.fn>
-  }
-  verificationToken: {
-    upsert: ReturnType<typeof vi.fn>
-    findUnique: ReturnType<typeof vi.fn>
-    delete: ReturnType<typeof vi.fn>
-  }
-  session: {
-    deleteMany: ReturnType<typeof vi.fn>
-  }
-  $connect: ReturnType<typeof vi.fn>
-  $disconnect: ReturnType<typeof vi.fn>
-}
-
-// Mock the entire @/lib/db module
-const mockPrisma: MockPrisma = {
-  user: {
-    findUnique: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-  },
-  verificationToken: {
-    upsert: vi.fn(),
-    findUnique: vi.fn(),
-    delete: vi.fn(),
-  },
-  session: {
-    deleteMany: vi.fn(),
-  },
-  $connect: vi.fn(),
-  $disconnect: vi.fn(),
-}
-
+// Mock the @/lib/db module - MUST be before any imports that use it
 vi.mock("@/lib/db", () => ({
-  prisma: mockPrisma,
-  default: mockPrisma,
+  prisma: {
+    user: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    verificationToken: {
+      upsert: vi.fn(),
+      findUnique: vi.fn(),
+      delete: vi.fn(),
+    },
+    session: {
+      deleteMany: vi.fn(),
+    },
+    $connect: vi.fn(),
+    $disconnect: vi.fn(),
+  },
 }))
 
 // Import after mocking
@@ -55,6 +34,10 @@ import {
   requestPasswordReset,
   resetPassword 
 } from "@/lib/auth"
+
+// Get the mocked prisma instance from the module
+import * as dbModule from "@/lib/db"
+const mockPrisma = dbModule.prisma
 
 describe("Validation Schemas", () => {
   describe("registerSchema", () => {
@@ -287,12 +270,12 @@ describe("authenticateUser", () => {
   it("should return null for non-existent user", async () => {
     mockPrisma.user.findUnique.mockResolvedValue(null)
 
-    const result = await authenticateUser({
-      email: "nonexistent@example.com",
-      password: "password123",
-    })
-
-    expect(result).toBeNull()
+    await expect(
+      authenticateUser({
+        email: "nonexistent@example.com",
+        password: "password123",
+      })
+    ).rejects.toThrow("Invalid email or password")
   })
 
   it("should return null for locked account", async () => {
@@ -307,12 +290,12 @@ describe("authenticateUser", () => {
 
     mockPrisma.user.findUnique.mockResolvedValue(lockedUser)
 
-    const result = await authenticateUser({
-      email: "john@example.com",
-      password: "SecurePass123!",
-    })
-
-    expect(result).toBeNull()
+    await expect(
+      authenticateUser({
+        email: "john@example.com",
+        password: "SecurePass123!",
+      })
+    ).rejects.toThrow(/Account temporarily locked/)
   })
 
   it("should increment failed attempts on wrong password", async () => {
@@ -331,12 +314,13 @@ describe("authenticateUser", () => {
       failedLoginAttempts: 3,
     })
 
-    const result = await authenticateUser({
-      email: "john@example.com",
-      password: "WrongPassword123!",
-    })
-
-    expect(result).toBeNull()
+    await expect(
+      authenticateUser({
+        email: "john@example.com",
+        password: "WrongPassword123!",
+      })
+    ).rejects.toThrow("Invalid email or password")
+    
     expect(mockPrisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-123" },
       data: {
@@ -357,10 +341,12 @@ describe("authenticateUser", () => {
 
     mockPrisma.user.findUnique.mockResolvedValue(mockUser)
 
-    await authenticateUser({
-      email: "john@example.com",
-      password: "WrongPassword123!",
-    })
+    await expect(
+      authenticateUser({
+        email: "john@example.com",
+        password: "WrongPassword123!",
+      })
+    ).rejects.toThrow(/Account locked due to multiple failed attempts/)
 
     expect(mockPrisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-123" },
