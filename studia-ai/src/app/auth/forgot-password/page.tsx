@@ -1,24 +1,31 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const [email, setEmail] = useState("")
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [email, setEmail] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSuccess(false)
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
 
     startTransition(async () => {
       try {
@@ -28,20 +35,20 @@ export default function ForgotPasswordPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email }),
-        })
+        });
 
-        const data = await response.json()
+        const data = await response.json();
 
         if (!response.ok) {
-          setError(data.error || "Failed to process request")
-          return
+          setError(data.error || "Failed to process request");
+          return;
         }
 
-        setSuccess(true)
+        setSuccess(true);
       } catch (err) {
-        setError("An unexpected error occurred. Please try again.")
+        setError("An unexpected error occurred. Please try again.");
       }
-    })
+    });
   }
 
   return (
@@ -62,7 +69,8 @@ export default function ForgotPasswordPage() {
             )}
             {success && (
               <div className="rounded-md bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/20 dark:text-green-400">
-                If an account exists with this email, you&apos;ll receive a password reset link.
+                If an account exists with this email, you&apos;ll receive a
+                password reset link.
               </div>
             )}
             <div className="space-y-2">
@@ -80,7 +88,11 @@ export default function ForgotPasswordPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isPending || success}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isPending || success}
+            >
               {isPending ? "Sending..." : "Send Reset Link"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
@@ -96,5 +108,5 @@ export default function ForgotPasswordPage() {
         </form>
       </Card>
     </div>
-  )
+  );
 }

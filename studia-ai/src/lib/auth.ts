@@ -1,6 +1,6 @@
-import argon2 from "argon2"
-import { z } from "zod"
-import { prisma } from "@/lib/db"
+import argon2 from "argon2";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
 
 // ============================================
 // Validation Schemas
@@ -15,24 +15,27 @@ export const registerSchema = z.object({
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-})
+    .regex(
+      /[^A-Za-z0-9]/,
+      "Password must contain at least one special character",
+    ),
+});
 
-export type RegisterInput = z.infer<typeof registerSchema>
+export type RegisterInput = z.infer<typeof registerSchema>;
 
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
-})
+});
 
-export type LoginInput = z.infer<typeof loginSchema>
+export type LoginInput = z.infer<typeof loginSchema>;
 
 // ============================================
 // Security Constants
 // ============================================
 
-export const MAX_FAILED_ATTEMPTS = 5
-export const LOCKOUT_DURATION_MS = 15 * 60 * 1000 // 15 minutes
+export const MAX_FAILED_ATTEMPTS = 5;
+export const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 // ============================================
 // Helper Functions (exported for testing)
@@ -42,44 +45,47 @@ export const LOCKOUT_DURATION_MS = 15 * 60 * 1000 // 15 minutes
  * Check if an account is currently locked
  */
 export function isAccountLocked(lockedUntil: Date | null): boolean {
-  if (!lockedUntil) return false
-  return lockedUntil > new Date()
+  if (!lockedUntil) return false;
+  return lockedUntil > new Date();
 }
 
 /**
  * Get the lockout expiry time (15 minutes from now)
  */
 export function getLockoutExpiryTime(): Date {
-  return new Date(Date.now() + LOCKOUT_DURATION_MS)
+  return new Date(Date.now() + LOCKOUT_DURATION_MS);
 }
 
 /**
  * Sanitize error messages to prevent information leakage
  */
 export function sanitizeError(error: Error): string {
-  const message = error.message.toLowerCase()
-  
+  const message = error.message.toLowerCase();
+
   // Database-related errors (e.g., unique constraint violations)
-  if (message.includes("already exists") || 
-      message.includes("unique constraint")) {
-    return "An error occurred. Please try again."
+  if (
+    message.includes("already exists") ||
+    message.includes("unique constraint")
+  ) {
+    return "An error occurred. Please try again.";
   }
-  
+
   // Validation errors that might reveal system details
-  if (message.includes("requirements") || 
-      message.includes("validation")) {
-    return "An error occurred. Please try again."
+  if (message.includes("requirements") || message.includes("validation")) {
+    return "An error occurred. Please try again.";
   }
-  
+
   // Authentication errors - keep generic for anti-enumeration
-  if (message.includes("credentials") || 
-      message.includes("password") || 
-      message.includes("email")) {
-    return "Invalid credentials"
+  if (
+    message.includes("credentials") ||
+    message.includes("password") ||
+    message.includes("email")
+  ) {
+    return "Invalid credentials";
   }
-  
+
   // Default: return original message for operational errors
-  return error.message
+  return error.message;
 }
 
 // ============================================
@@ -90,15 +96,15 @@ export function sanitizeError(error: Error): string {
  * Register a new user with secure password hashing using Argon2id
  */
 export async function registerUser(data: RegisterInput) {
-  const { name, email, password } = data
+  const { name, email, password } = data;
 
   // Check if user already exists (anti-enumeration: same error message)
   const existingUser = await prisma.user.findUnique({
     where: { email },
-  })
+  });
 
   if (existingUser) {
-    throw new Error("User with this email already exists")
+    throw new Error("User with this email already exists");
   }
 
   // Hash password with Argon2id
@@ -107,7 +113,7 @@ export async function registerUser(data: RegisterInput) {
     memoryCost: 19456,
     timeCost: 2,
     parallelism: 1,
-  })
+  });
 
   // Create user with profile
   const user = await prisma.user.create({
@@ -123,32 +129,36 @@ export async function registerUser(data: RegisterInput) {
     include: {
       profile: true,
     },
-  })
+  });
 
   return {
     id: user.id,
     email: user.email,
     name: user.name,
-  }
+  };
 }
 
 /**
  * Authenticate user with rate limiting and account lockout protection
  */
 export async function authenticateUser(data: LoginInput) {
-  const { email, password } = data
+  const { email, password } = data;
 
   const user = await prisma.user.findUnique({
     where: { email },
     include: {
       profile: true,
     },
-  })
+  });
 
   // Anti-enumeration: check account lockout first
   if (user?.lockedUntil && user.lockedUntil > new Date()) {
-    const remainingMinutes = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000)
-    throw new Error(`Account temporarily locked. Try again in ${remainingMinutes} minutes.`)
+    const remainingMinutes = Math.ceil(
+      (user.lockedUntil.getTime() - Date.now()) / 60000,
+    );
+    throw new Error(
+      `Account temporarily locked. Try again in ${remainingMinutes} minutes.`,
+    );
   }
 
   // Reset lockout if user was previously locked but time has passed
@@ -159,21 +169,21 @@ export async function authenticateUser(data: LoginInput) {
         failedLoginAttempts: 0,
         lockedUntil: null,
       },
-    })
+    });
   }
 
   // Anti-enumeration: generic error message
   if (!user || !user.passwordHash) {
-    throw new Error("Invalid email or password")
+    throw new Error("Invalid email or password");
   }
 
   // Verify password with Argon2id
-  const isPasswordValid = await argon2.verify(user.passwordHash, password)
+  const isPasswordValid = await argon2.verify(user.passwordHash, password);
 
   if (!isPasswordValid) {
     // Increment failed attempts
-    const newFailedAttempts = user.failedLoginAttempts + 1
-    
+    const newFailedAttempts = user.failedLoginAttempts + 1;
+
     if (newFailedAttempts >= MAX_FAILED_ATTEMPTS) {
       // Lock account
       await prisma.user.update({
@@ -182,8 +192,10 @@ export async function authenticateUser(data: LoginInput) {
           failedLoginAttempts: newFailedAttempts,
           lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS),
         },
-      })
-      throw new Error(`Account locked due to multiple failed attempts. Try again in ${Math.ceil(LOCKOUT_DURATION_MS / 60000)} minutes.`)
+      });
+      throw new Error(
+        `Account locked due to multiple failed attempts. Try again in ${Math.ceil(LOCKOUT_DURATION_MS / 60000)} minutes.`,
+      );
     }
 
     // Update failed attempts
@@ -192,9 +204,9 @@ export async function authenticateUser(data: LoginInput) {
       data: {
         failedLoginAttempts: newFailedAttempts,
       },
-    })
+    });
 
-    throw new Error("Invalid email or password")
+    throw new Error("Invalid email or password");
   }
 
   // Successful login: reset failed attempts and update security stamp
@@ -205,7 +217,7 @@ export async function authenticateUser(data: LoginInput) {
       lockedUntil: null,
       securityStamp: crypto.randomUUID(),
     },
-  })
+  });
 
   return {
     id: user.id,
@@ -213,7 +225,7 @@ export async function authenticateUser(data: LoginInput) {
     name: user.name,
     profile: user.profile,
     securityStamp: user.securityStamp,
-  }
+  };
 }
 
 /**
@@ -225,9 +237,9 @@ export async function getUserById(id: string) {
     include: {
       profile: true,
     },
-  })
+  });
 
-  return user
+  return user;
 }
 
 /**
@@ -239,9 +251,9 @@ export async function getUserByEmail(email: string) {
     include: {
       profile: true,
     },
-  })
+  });
 
-  return user
+  return user;
 }
 
 /**
@@ -253,37 +265,44 @@ export async function invalidateUserSessions(userId: string) {
     data: {
       securityStamp: crypto.randomUUID(),
     },
-  })
+  });
 }
 
 /**
  * Change user password with validation
  */
-export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) {
   // Validate new password
-  const result = registerSchema.safeParse({ 
-    name: "x", 
-    email: "x@x.com", 
-    password: newPassword 
-  })
-  
+  const result = registerSchema.safeParse({
+    name: "x",
+    email: "x@x.com",
+    password: newPassword,
+  });
+
   if (!result.success) {
-    throw new Error("New password does not meet requirements")
+    throw new Error("New password does not meet requirements");
   }
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-  })
+  });
 
   if (!user || !user.passwordHash) {
-    throw new Error("User not found")
+    throw new Error("User not found");
   }
 
   // Verify current password
-  const isCurrentPasswordValid = await argon2.verify(user.passwordHash, currentPassword)
+  const isCurrentPasswordValid = await argon2.verify(
+    user.passwordHash,
+    currentPassword,
+  );
 
   if (!isCurrentPasswordValid) {
-    throw new Error("Current password is incorrect")
+    throw new Error("Current password is incorrect");
   }
 
   // Hash new password
@@ -292,7 +311,7 @@ export async function changePassword(userId: string, currentPassword: string, ne
     memoryCost: 19456,
     timeCost: 2,
     parallelism: 1,
-  })
+  });
 
   // Update password and rotate security stamp
   await prisma.user.update({
@@ -301,9 +320,9 @@ export async function changePassword(userId: string, currentPassword: string, ne
       passwordHash: newPasswordHash,
       securityStamp: crypto.randomUUID(),
     },
-  })
+  });
 
-  return true
+  return true;
 }
 
 /**
@@ -312,16 +331,16 @@ export async function changePassword(userId: string, currentPassword: string, ne
 export async function requestPasswordReset(email: string) {
   const user = await prisma.user.findUnique({
     where: { email },
-  })
+  });
 
   // Anti-enumeration: always return success even if user doesn't exist
   if (!user) {
-    return { success: true }
+    return { success: true };
   }
 
   // Generate reset token (in production, send via email)
-  const resetToken = crypto.randomUUID()
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+  const resetToken = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
   // Store token in VerificationToken table
   await prisma.verificationToken.upsert({
@@ -339,7 +358,7 @@ export async function requestPasswordReset(email: string) {
       token: resetToken,
       expires: expiresAt,
     },
-  })
+  });
 
   // In production: send email with reset link
   // For now, return token (only for development/testing)
@@ -347,13 +366,17 @@ export async function requestPasswordReset(email: string) {
     success: true,
     resetToken, // Remove in production
     expiresAt,
-  }
+  };
 }
 
 /**
  * Reset password with token
  */
-export async function resetPassword(email: string, token: string, newPassword: string) {
+export async function resetPassword(
+  email: string,
+  token: string,
+  newPassword: string,
+) {
   // Verify token FIRST - before validating password
   // This prevents leaking information about password requirements with invalid tokens
   const verificationToken = await prisma.verificationToken.findUnique({
@@ -363,32 +386,36 @@ export async function resetPassword(email: string, token: string, newPassword: s
         token,
       },
     },
-  })
+  });
 
   if (!verificationToken || verificationToken.expires < new Date()) {
-    throw new Error("Invalid or expired reset token")
+    throw new Error("Invalid or expired reset token");
   }
 
   // Validate new password ONLY (not name/email which are not relevant here)
-  const passwordSchema = z.string()
+  const passwordSchema = z
+    .string()
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character")
-  
-  const result = passwordSchema.safeParse(newPassword)
-  
+    .regex(
+      /[^A-Za-z0-9]/,
+      "Password must contain at least one special character",
+    );
+
+  const result = passwordSchema.safeParse(newPassword);
+
   if (!result.success) {
-    throw new Error("Password does not meet requirements")
+    throw new Error("Password does not meet requirements");
   }
 
   const user = await prisma.user.findUnique({
     where: { email },
-  })
+  });
 
   if (!user) {
-    throw new Error("User not found")
+    throw new Error("User not found");
   }
 
   // Hash new password
@@ -397,7 +424,7 @@ export async function resetPassword(email: string, token: string, newPassword: s
     memoryCost: 19456,
     timeCost: 2,
     parallelism: 1,
-  })
+  });
 
   // Update password, reset lockout, and rotate security stamp
   await prisma.user.update({
@@ -408,7 +435,7 @@ export async function resetPassword(email: string, token: string, newPassword: s
       lockedUntil: null,
       securityStamp: crypto.randomUUID(),
     },
-  })
+  });
 
   // Delete used token
   await prisma.verificationToken.delete({
@@ -418,7 +445,7 @@ export async function resetPassword(email: string, token: string, newPassword: s
         token,
       },
     },
-  })
+  });
 
-  return true
+  return true;
 }

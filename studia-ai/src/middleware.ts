@@ -1,7 +1,7 @@
-import NextAuth from "next-auth"
-import { authConfig } from "@/app/api/auth/[...nextauth]/route"
+import NextAuth from "next-auth";
+import { authConfig } from "@/app/api/auth/[...nextauth]/route";
 
-export const middleware = NextAuth(authConfig)
+export const middleware = NextAuth(authConfig);
 
 export const config = {
   matcher: [
@@ -15,4 +15,4 @@ export const config = {
      */
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
-}
+};

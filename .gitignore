@@ -2,67 +2,44 @@
 # Dependencies
 node_modules/
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-.ENV
-.ENV.*
-.venv/
-.venv.*
-.conda/
-.mypy_cache/
-.pytest_cache/
-.coverage
-coverage/
-htmlcov/
-
-# Build artifacts
+# Build outputs
 dist/
 build/
-*.egg-info/
-.eggs/
-
-# Logs
-*.log
+.next/
 
 # Environment variables
 .env
 .env.local
-.env.*
-!.env.example
+*.env.*
 
-# IDE
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Temporary files
+*.tmp
+
+# OS generated files
 .DS_Store
 Thumbs.db
 
 # Testing
-coverage/
-htmlcov/
-.pytest_cache/
-.hypothesis/
-
-# Distribution / packaging
-*.tar.gz
-*.whl
-*.egg
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Local configuration
-.settings/
-*.local
+.jest/
+.nyc_output/
 ```

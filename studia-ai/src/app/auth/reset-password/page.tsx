@@ -1,40 +1,47 @@
-"use client"
+"use client";
 
-import { useState, useTransition, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useTransition, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 function ResetPasswordForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams.get("token")
-  const email = searchParams.get("email")
-  
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+  const email = searchParams.get("email");
+
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
-  })
+  });
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSuccess(false)
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      return
+      setError("Passwords do not match");
+      return;
     }
 
     if (!token || !email) {
-      setError("Invalid or missing reset token")
-      return
+      setError("Invalid or missing reset token");
+      return;
     }
 
     startTransition(async () => {
@@ -49,25 +56,25 @@ function ResetPasswordForm() {
             token,
             password: formData.password,
           }),
-        })
+        });
 
-        const data = await response.json()
+        const data = await response.json();
 
         if (!response.ok) {
-          setError(data.error || "Failed to reset password")
-          return
+          setError(data.error || "Failed to reset password");
+          return;
         }
 
-        setSuccess(true)
-        
+        setSuccess(true);
+
         // Redirect to signin after successful reset
         setTimeout(() => {
-          router.push("/auth/signin")
-        }, 2000)
+          router.push("/auth/signin");
+        }, 2000);
       } catch (err) {
-        setError("An unexpected error occurred. Please try again.")
+        setError("An unexpected error occurred. Please try again.");
       }
-    })
+    });
   }
 
   return (
@@ -75,9 +82,7 @@ function ResetPasswordForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Reset password</CardTitle>
-          <CardDescription>
-            Enter your new password below
-          </CardDescription>
+          <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -97,14 +102,17 @@ function ResetPasswordForm() {
                 id="password"
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
                 disabled={isPending || success}
                 required
                 autoComplete="new-password"
                 minLength={8}
               />
               <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters with uppercase, lowercase, number, and special character
+                Must be at least 8 characters with uppercase, lowercase, number,
+                and special character
               </p>
             </div>
             <div className="space-y-2">
@@ -113,7 +121,9 @@ function ResetPasswordForm() {
                 id="confirmPassword"
                 type="password"
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, confirmPassword: e.target.value })
+                }
                 disabled={isPending || success}
                 required
                 autoComplete="new-password"
@@ -122,7 +132,11 @@ function ResetPasswordForm() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isPending || success}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isPending || success}
+            >
               {isPending ? "Resetting..." : "Reset Password"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
@@ -138,17 +152,19 @@ function ResetPasswordForm() {
         </form>
       </Card>
     </div>
-  )
+  );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-black">
-        <div className="w-full max-w-md text-center">Loading...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-black">
+          <div className="w-full max-w-md text-center">Loading...</div>
+        </div>
+      }
+    >
       <ResetPasswordForm />
     </Suspense>
-  )
+  );
 }
