@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,6 @@ import {
 } from "@/components/ui/card";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -45,7 +43,7 @@ export default function ForgotPasswordPage() {
         }
 
         setSuccess(true);
-      } catch (err) {
+      } catch {
         setError("An unexpected error occurred. Please try again.");
       }
     });
