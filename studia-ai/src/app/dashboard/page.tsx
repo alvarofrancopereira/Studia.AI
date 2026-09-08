@@ -15,12 +15,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, Target, TrendingUp, Award } from "lucide-react";
 
 export default function DashboardPage() {
-  const session = useSession();
+  const sessionHook = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
+  // Extrair dados de forma segura para SSR
+  const status = sessionHook?.status ?? "loading";
+  const session = sessionHook?.data;
+
   useEffect(() => {
-    if (session.status === "unauthenticated") {
+    if (status === "unauthenticated") {
       router.push("/auth/signin?callbackUrl=/dashboard");
       return;
     }
@@ -31,9 +35,9 @@ export default function DashboardPage() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [session.status, router]);
+  }, [status, router]);
 
-  if (session.status === "loading" || isLoading) {
+  if (status === "loading" || isLoading) {
     return (
       <div className="container mx-auto py-6 px-4">
         <Skeleton className="h-8 w-1/3 mb-6" />
@@ -55,7 +59,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!session.data) {
+  if (!session) {
     return null;
   }
 
