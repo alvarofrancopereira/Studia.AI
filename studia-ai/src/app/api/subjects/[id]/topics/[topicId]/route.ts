@@ -4,11 +4,11 @@ import { auth } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; topicId: string }> }
+  { params }: { params: Promise<{ id: string; topicId: string }> },
 ) {
   try {
     const session = await auth();
-    
+
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -53,17 +53,14 @@ export async function GET(
     });
 
     if (!topic) {
-      return NextResponse.json(
-        { error: "Topic not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Topic not found" }, { status: 404 });
     }
 
     // Verificar se o tópico pertence à matéria especificada
     if (topic.subjectId !== subjectId) {
       return NextResponse.json(
         { error: "Topic does not belong to the specified subject" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -125,7 +122,7 @@ export async function GET(
     console.error("Error fetching topic details:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -56,7 +56,7 @@ export default function TopicDetailPage() {
 
   const fetchTopic = useCallback(async () => {
     if (!session?.user?.email || hasFetchedRef.current) return;
-    
+
     hasFetchedRef.current = true;
 
     try {
@@ -131,9 +131,18 @@ export default function TopicDetailPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <FileText className="h-12 w-12 mx-auto mb-4 text-destructive opacity-50" />
-            <h3 className="text-lg font-semibold mb-2">Erro ao carregar tópico</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Erro ao carregar tópico
+            </h3>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => { hasFetchedRef.current = false; fetchTopic(); }}>Tentar Novamente</Button>
+            <Button
+              onClick={() => {
+                hasFetchedRef.current = false;
+                fetchTopic();
+              }}
+            >
+              Tentar Novamente
+            </Button>
           </CardContent>
         </Card>
       </div>
