@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -29,6 +29,33 @@ export default function SubjectsPage() {
   const router = useRouter();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
+
+  const fetchSubjects = useCallback(async () => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch("/api/subjects");
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch subjects");
+      }
+
+      const data = await response.json();
+      setSubjects(data.subjects);
+    } catch (err) {
+      console.error("Error fetching subjects:", err);
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -36,18 +63,10 @@ export default function SubjectsPage() {
       return;
     }
 
-    // Simular carregamento de matérias
-    const fetchSubjects = async () => {
-      // Em produção, isso seria uma chamada à API
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Dados mockados para demonstração
-      setSubjects([]);
-      setIsLoading(false);
-    };
-
-    fetchSubjects();
-  }, [status, router]);
+    if (status === "authenticated" && !hasFetchedRef.current) {
+      fetchSubjects();
+    }
+  }, [status, router, fetchSubjects]);
 
   if (status === "loading" || isLoading) {
     return (
@@ -69,6 +88,37 @@ export default function SubjectsPage() {
             </Card>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-6 px-4">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Matérias</h1>
+            <p className="text-muted-foreground">
+              Gerencie suas matérias e tópicos de estudo
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              hasFetchedRef.current = false;
+              fetchSubjects();
+            }}
+          >
+            Tentar Novamente
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <h3 className="text-lg font-semibold mb-2">
+              Erro ao carregar matérias
+            </h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -99,7 +149,7 @@ export default function SubjectsPage() {
               estudos.
             </p>
             <Button>
-              <Plus className="mr-2 h-4 w-4" /> Adicionar Matéria
+              <Plus className="mr-2 h-4 w-4" /> Criar Primeira Matéria
             </Button>
           </CardContent>
         </Card>
@@ -111,29 +161,29 @@ export default function SubjectsPage() {
               className="hover:shadow-md transition-shadow"
             >
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>{subject.name}</CardTitle>
-                    {subject.description && (
-                      <CardDescription>{subject.description}</CardDescription>
-                    )}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xl">{subject.name}</CardTitle>
                   {subject.color && (
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: subject.color }}
+                      title={subject.color}
                     />
                   )}
                 </div>
+                <CardDescription>
+                  {subject.description || "Sem descrição"}
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    {subject.topicCount} tópicos
-                  </span>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {subject.topicCount}{" "}
+                    {subject.topicCount === 1 ? "tópico" : "tópicos"}
+                  </p>
                   <Link href={`/subjects/${subject.id}`}>
-                    <Button variant="ghost" size="sm">
-                      Ver <ArrowRight className="ml-1 h-4 w-4" />
+                    <Button variant="outline" size="sm">
+                      Ver <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
