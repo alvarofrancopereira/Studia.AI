@@ -1,19 +1,18 @@
 ```
 # Dependencies
 node_modules/
+.julia/
+zig*/
+target/
 
-# Build outputs
+# Build artifacts
 dist/
 build/
-.next/
-out/
+*.o
+*.obj
+*.out
 
-# Environment variables
-.env
-.env.local
-*.env.*
-
-# Python
+# Python specific
 __pycache__/
 *.pyc
 *.pyo
@@ -22,25 +21,50 @@ __pycache__/
 env/
 venv/
 .venv/
-.ENV
-.python-version
-
-# Logs
+.venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 *.log
-
-# OS generated files
+*.tmp
+*.swp
+*.swo
 .DS_Store
 Thumbs.db
 
-# Editor
+# Environment variables
+.env
+.env.local
+.env.*
+
+# Testing
+.coverage*
+htmlcov/
+.tox/
+.nox/
+coverage/
+junit.xml
+*.gcda
+*.gcno
+
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*.tmp
 
-# Coverage
-coverage/
-htmlcov/
-.coverage
+# OS generated files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Icon?
+Thumbs.db*
 ```
