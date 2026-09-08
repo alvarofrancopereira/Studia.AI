@@ -4,7 +4,13 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, Plus, ArrowRight } from "lucide-react";
@@ -33,8 +39,8 @@ export default function SubjectsPage() {
     // Simular carregamento de matérias
     const fetchSubjects = async () => {
       // Em produção, isso seria uma chamada à API
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
       // Dados mockados para demonstração
       setSubjects([]);
       setIsLoading(false);
@@ -85,9 +91,12 @@ export default function SubjectsPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-semibold mb-2">Nenhuma matéria cadastrada</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Nenhuma matéria cadastrada
+            </h3>
             <p className="text-muted-foreground mb-4">
-              Comece adicionando sua primeira matéria para organizar seus estudos.
+              Comece adicionando sua primeira matéria para organizar seus
+              estudos.
             </p>
             <Button>
               <Plus className="mr-2 h-4 w-4" /> Adicionar Matéria
@@ -96,8 +105,11 @@ export default function SubjectsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {subjects.map(subject => (
-            <Card key={subject.id} className="hover:shadow-md transition-shadow">
+          {subjects.map((subject) => (
+            <Card
+              key={subject.id}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
@@ -107,8 +119,8 @@ export default function SubjectsPage() {
                     )}
                   </div>
                   {subject.color && (
-                    <div 
-                      className="w-3 h-3 rounded-full" 
+                    <div
+                      className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: subject.color }}
                     />
                   )}
