@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -47,28 +47,51 @@ interface TopicDetail {
 
 export default function TopicDetailPage() {
   const { id, topicId } = useParams<{ id: string; topicId: string }>();
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const router = useRouter();
   const [topic, setTopic] = useState<TopicDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
+
+  const fetchTopic = useCallback(async () => {
+    if (!session?.user?.email || hasFetchedRef.current) return;
+    
+    hasFetchedRef.current = true;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch(`/api/subjects/${id}/topics/${topicId}`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch topic");
+      }
+
+      const data = await response.json();
+      setTopic(data.topic);
+    } catch (err) {
+      console.error("Error fetching topic:", err);
+      setError(err instanceof Error ? err.message : "Unknown error");
+      setTopic(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id, topicId, session?.user?.email]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push(`/auth/signin?callbackUrl=/subjects/${id}/topics/${topicId}`);
-      return;
     }
-
-    // Simular carregamento de detalhes do tópico
-    const fetchTopic = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Dados mockados para demonstração
-      setTopic(null);
-      setIsLoading(false);
-    };
-
-    fetchTopic();
   }, [status, router, id, topicId]);
+
+  useEffect(() => {
+    if (status === "authenticated" && !hasFetchedRef.current) {
+      fetchTopic();
+    }
+  }, [status, fetchTopic]);
 
   if (status === "loading" || isLoading) {
     return (
@@ -92,6 +115,27 @@ export default function TopicDetailPage() {
             </Card>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-6 px-4">
+        <Link href={`/subjects/${id}`}>
+          <Button variant="outline" size="sm" className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+          </Button>
+        </Link>
+
+        <Card>
+          <CardContent className="py-12 text-center">
+            <FileText className="h-12 w-12 mx-auto mb-4 text-destructive opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Erro ao carregar tópico</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => { hasFetchedRef.current = false; fetchTopic(); }}>Tentar Novamente</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
