@@ -44,6 +44,9 @@ model User {
   accounts         Account[]
   sessions         Session[]
 
+  // Teacher relations
+  subjects Subject[]
+
   @@index([email])
   @@map("users")
 }
@@ -68,6 +71,8 @@ model Profile {
 // Subject and Topic structure
 model Subject {
   id          String   @id @default(uuid())
+  teacherId   String
+  teacher     User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   name        String
   description String?
   color       String? // For UI visualization
@@ -78,6 +83,7 @@ model Subject {
 
   topics Topic[]
 
+  @@index([teacherId])
   @@index([name])
   @@map("subjects")
 }

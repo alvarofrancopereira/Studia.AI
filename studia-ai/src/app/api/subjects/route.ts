@@ -18,9 +18,12 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Buscar todas as matérias ativas
+    // Buscar apenas matérias do usuário (teacher)
     const subjects = await prisma.subject.findMany({
-      where: { isActive: true },
+      where: { 
+        isActive: true,
+        teacherId: user.id 
+      },
       include: {
         topics: {
           where: {}, // Topic não tem isActive no schema atual
@@ -79,6 +82,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         color: color || null,
         icon: icon || null,
+        teacherId: user.id,
       },
     });
 

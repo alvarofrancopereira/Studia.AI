@@ -23,8 +23,16 @@ export async function GET(
 
     const { id } = await params;
 
+    // Fetch question with ownership check via topic -> subject -> teacherId
     const question = await prisma.question.findUnique({
-      where: { id },
+      where: { 
+        id,
+        topic: {
+          subject: {
+            teacherId: user.id
+          }
+        }
+      },
       include: {
         topic: {
           select: {
@@ -96,14 +104,30 @@ export async function PUT(
     const { content, difficulty, questionType, explanation, tags, isActive } =
       body;
 
-    // Verify question exists
+    // Verify question exists and belongs to this teacher
     const existingQuestion = await prisma.question.findUnique({
-      where: { id },
+      where: { 
+        id,
+        topic: {
+          subject: {
+            teacherId: user.id
+          }
+        }
+      },
+      include: {
+        topic: {
+          select: {
+            id: true,
+            name: true,
+            subjectId: true,
+          },
+        },
+      },
     });
 
     if (!existingQuestion) {
       return NextResponse.json(
-        { error: "Question not found" },
+        { error: "Question not found or access denied" },
         { status: 404 },
       );
     }
@@ -170,14 +194,21 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Verify question exists
+    // Verify question exists and belongs to this teacher
     const existingQuestion = await prisma.question.findUnique({
-      where: { id },
+      where: {
+        id,
+        topic: {
+          subject: {
+            teacherId: user.id
+          }
+        }
+      },
     });
 
     if (!existingQuestion) {
       return NextResponse.json(
-        { error: "Question not found" },
+        { error: "Question not found or access denied" },
         { status: 404 },
       );
     }

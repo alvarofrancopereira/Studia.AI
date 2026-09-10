@@ -42,12 +42,25 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get("difficulty");
     const questionType = searchParams.get("questionType");
 
+    // Build ownership-aware query: questions belong to topics that belong to subjects owned by this teacher
     const where: {
       isActive?: boolean;
+      topic?: {
+        subject?: {
+          teacherId?: string;
+        };
+      };
       topicId?: string;
       difficulty?: string;
       questionType?: string;
-    } = { isActive: true };
+    } = { 
+      isActive: true,
+      topic: {
+        subject: {
+          teacherId: user.id
+        }
+      }
+    };
 
     if (topicId) {
       where.topicId = topicId;
@@ -83,7 +96,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Remove correct answer info for non-owner questions (future enhancement)
+    // Questions are already filtered by ownership via the where clause
     const sanitizedQuestions = questions.map((q) => ({
       id: q.id,
       topicId: q.topicId,
@@ -139,13 +152,26 @@ export async function POST(request: NextRequest) {
     const { topicId, content, difficulty, questionType, explanation, tags } =
       validation.data;
 
-    // Verify topic exists
+    // Verify topic exists and belongs to a subject owned by this teacher
     const topic = await prisma.topic.findUnique({
       where: { id: topicId },
+      include: {
+        subject: {
+          select: { teacherId: true },
+        },
+      },
     });
 
     if (!topic) {
       return NextResponse.json({ error: "Topic not found" }, { status: 404 });
+    }
+
+    // Verify ownership: the topic's subject must belong to this teacher
+    if (topic.subject.teacherId !== user.id) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only create questions in your own subjects" },
+        { status: 403 },
+      );
     }
 
     const question = await prisma.question.create({
