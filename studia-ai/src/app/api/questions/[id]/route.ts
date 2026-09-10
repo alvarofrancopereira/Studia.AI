@@ -25,13 +25,13 @@ export async function GET(
 
     // Fetch question with ownership check via topic -> subject -> teacherId
     const question = await prisma.question.findUnique({
-      where: { 
+      where: {
         id,
         topic: {
           subject: {
-            teacherId: user.id
-          }
-        }
+            teacherId: user.id,
+          },
+        },
       },
       include: {
         topic: {
@@ -106,13 +106,13 @@ export async function PUT(
 
     // Verify question exists and belongs to this teacher
     const existingQuestion = await prisma.question.findUnique({
-      where: { 
+      where: {
         id,
         topic: {
           subject: {
-            teacherId: user.id
-          }
-        }
+            teacherId: user.id,
+          },
+        },
       },
       include: {
         topic: {
@@ -200,9 +200,9 @@ export async function DELETE(
         id,
         topic: {
           subject: {
-            teacherId: user.id
-          }
-        }
+            teacherId: user.id,
+          },
+        },
       },
     });
 

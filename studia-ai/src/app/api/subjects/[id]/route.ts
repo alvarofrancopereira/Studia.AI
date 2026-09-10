@@ -25,9 +25,9 @@ export async function GET(
 
     // Buscar matéria com tópicos - verificar ownership
     const subject = await prisma.subject.findUnique({
-      where: { 
+      where: {
         id: subjectId,
-        teacherId: user.id 
+        teacherId: user.id,
       },
       include: {
         topics: {

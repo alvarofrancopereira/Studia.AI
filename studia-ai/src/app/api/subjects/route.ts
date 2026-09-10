@@ -20,9 +20,9 @@ export async function GET() {
 
     // Buscar apenas matérias do usuário (teacher)
     const subjects = await prisma.subject.findMany({
-      where: { 
+      where: {
         isActive: true,
-        teacherId: user.id 
+        teacherId: user.id,
       },
       include: {
         topics: {

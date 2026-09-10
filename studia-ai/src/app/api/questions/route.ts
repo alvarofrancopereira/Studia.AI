@@ -53,13 +53,13 @@ export async function GET(request: NextRequest) {
       topicId?: string;
       difficulty?: string;
       questionType?: string;
-    } = { 
+    } = {
       isActive: true,
       topic: {
         subject: {
-          teacherId: user.id
-        }
-      }
+          teacherId: user.id,
+        },
+      },
     };
 
     if (topicId) {
@@ -169,7 +169,10 @@ export async function POST(request: NextRequest) {
     // Verify ownership: the topic's subject must belong to this teacher
     if (topic.subject.teacherId !== user.id) {
       return NextResponse.json(
-        { error: "Forbidden: You can only create questions in your own subjects" },
+        {
+          error:
+            "Forbidden: You can only create questions in your own subjects",
+        },
         { status: 403 },
       );
     }
