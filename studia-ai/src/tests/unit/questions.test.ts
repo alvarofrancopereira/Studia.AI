@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 
 // Mock types
 interface QuestionOption {
@@ -100,8 +100,13 @@ describe("Question System", () => {
     });
 
     it("should have exactly one correct answer for multiple choice", () => {
-      if (mockQuestion.questionType === "multiple_choice" && mockQuestion.options) {
-        const correctCount = mockQuestion.options.filter((opt) => opt.isCorrect).length;
+      if (
+        mockQuestion.questionType === "multiple_choice" &&
+        mockQuestion.options
+      ) {
+        const correctCount = mockQuestion.options.filter(
+          (opt) => opt.isCorrect,
+        ).length;
         expect(correctCount).toBe(1);
       }
     });
@@ -117,9 +122,12 @@ describe("Question System", () => {
 
   describe("Question Sanitization", () => {
     it("should remove isCorrect flag when sanitizing for students", () => {
-      const sanitizeForStudent = (question: Question) => ({
+      const sanitizeForStudent = (question: typeof mockQuestion) => ({
         ...question,
-        options: question.options?.map(({ isCorrect, ...rest }) => rest),
+        options: question.options?.map((opt) => {
+          const { isCorrect: _, ...rest } = opt;
+          return rest;
+        }),
       });
 
       const sanitized = sanitizeForStudent(mockQuestion);
@@ -129,9 +137,12 @@ describe("Question System", () => {
     });
 
     it("should preserve all other option properties after sanitization", () => {
-      const sanitizeForStudent = (question: Question) => ({
+      const sanitizeForStudent = (question: typeof mockQuestion) => ({
         ...question,
-        options: question.options?.map(({ isCorrect, ...rest }) => rest),
+        options: question.options?.map((opt) => {
+          const { isCorrect: _, ...rest } = opt;
+          return rest;
+        }),
       });
 
       const sanitized = sanitizeForStudent(mockQuestion);
@@ -147,24 +158,31 @@ describe("Question System", () => {
       { ...mockQuestion, id: "q1", difficulty: "easy" },
       { ...mockQuestion, id: "q2", difficulty: "medium" },
       { ...mockQuestion, id: "q3", difficulty: "hard" },
-      { ...mockQuestion, id: "q4", difficulty: "easy", questionType: "true_false" },
+      {
+        ...mockQuestion,
+        id: "q4",
+        difficulty: "easy",
+        questionType: "true_false",
+      },
     ];
 
     it("should filter questions by difficulty", () => {
-      const easyQuestions = mockQuestions.filter((q) => q.difficulty === "easy");
+      const easyQuestions = mockQuestions.filter(
+        (q) => q.difficulty === "easy",
+      );
       expect(easyQuestions.length).toBe(2);
     });
 
     it("should filter questions by question type", () => {
       const multipleChoice = mockQuestions.filter(
-        (q) => q.questionType === "multiple_choice"
+        (q) => q.questionType === "multiple_choice",
       );
       expect(multipleChoice.length).toBe(3);
     });
 
     it("should filter questions by multiple criteria", () => {
       const easyMultipleChoice = mockQuestions.filter(
-        (q) => q.difficulty === "easy" && q.questionType === "multiple_choice"
+        (q) => q.difficulty === "easy" && q.questionType === "multiple_choice",
       );
       expect(easyMultipleChoice.length).toBe(1);
     });
@@ -184,7 +202,6 @@ describe("Question System", () => {
   describe("Question Scoring", () => {
     it("should calculate score based on correct answers", () => {
       const userAnswers = ["opt-1", "opt-2", "opt-3", "opt-4"];
-      const correctAnswerId = mockQuestion.options?.find((o) => o.isCorrect)?.id;
 
       let correctCount = 0;
       userAnswers.forEach((answer, index) => {
@@ -199,7 +216,9 @@ describe("Question System", () => {
     });
 
     it("should give full score for correct answer", () => {
-      const correctAnswerId = mockQuestion.options?.find((o) => o.isCorrect)?.id;
+      const correctAnswerId = mockQuestion.options?.find(
+        (o) => o.isCorrect,
+      )?.id;
       const userAnswer = correctAnswerId;
 
       expect(userAnswer).toBe(mockQuestion.options?.[1].id);

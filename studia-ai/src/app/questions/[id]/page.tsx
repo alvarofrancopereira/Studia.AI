@@ -55,7 +55,11 @@ export default function QuestionDetailPage() {
   }
 
   if (error || !question) {
-    return <div className="p-8 text-red-500">Error: {error || "Question not found"}</div>;
+    return (
+      <div className="p-8 text-red-500">
+        Error: {error || "Question not found"}
+      </div>
+    );
   }
 
   return (
@@ -92,10 +96,7 @@ export default function QuestionDetailPage() {
           <h2 className="text-lg font-semibold mb-3">Options:</h2>
           <ul className="space-y-2">
             {question.options.map((option, index) => (
-              <li
-                key={option.id}
-                className="p-3 border rounded-lg bg-gray-50"
-              >
+              <li key={option.id} className="p-3 border rounded-lg bg-gray-50">
                 <span className="font-medium mr-2">{index + 1}.</span>
                 {option.content}
               </li>

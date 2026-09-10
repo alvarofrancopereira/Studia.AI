@@ -22,7 +22,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    
+
     const question = await prisma.question.findUnique({
       where: { id },
       include: {
@@ -45,7 +45,10 @@ export async function GET(
     });
 
     if (!question) {
-      return NextResponse.json({ error: "Question not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Question not found" },
+        { status: 404 },
+      );
     }
 
     // Sanitize: remove isCorrect from options for regular users
@@ -90,7 +93,8 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { content, difficulty, questionType, explanation, tags, isActive } = body;
+    const { content, difficulty, questionType, explanation, tags, isActive } =
+      body;
 
     // Verify question exists
     const existingQuestion = await prisma.question.findUnique({
@@ -98,10 +102,20 @@ export async function PUT(
     });
 
     if (!existingQuestion) {
-      return NextResponse.json({ error: "Question not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Question not found" },
+        { status: 404 },
+      );
     }
 
-    const updateData: { content?: string; difficulty?: string; questionType?: string; explanation?: string; tags?: string[]; isActive?: boolean } = {};
+    const updateData: {
+      content?: string;
+      difficulty?: string;
+      questionType?: string;
+      explanation?: string;
+      tags?: string[];
+      isActive?: boolean;
+    } = {};
     if (content !== undefined) updateData.content = content;
     if (difficulty !== undefined) updateData.difficulty = difficulty;
     if (questionType !== undefined) updateData.questionType = questionType;
@@ -162,7 +176,10 @@ export async function DELETE(
     });
 
     if (!existingQuestion) {
-      return NextResponse.json({ error: "Question not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Question not found" },
+        { status: 404 },
+      );
     }
 
     // Soft delete by setting isActive to false

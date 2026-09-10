@@ -34,7 +34,12 @@ export async function PUT(
       return NextResponse.json({ error: "Option not found" }, { status: 404 });
     }
 
-    const updateData: { content?: string; isCorrect?: boolean; order?: number; explanation?: string } = {};
+    const updateData: {
+      content?: string;
+      isCorrect?: boolean;
+      order?: number;
+      explanation?: string;
+    } = {};
     if (content !== undefined) updateData.content = content;
     if (isCorrect !== undefined) updateData.isCorrect = isCorrect;
     if (order !== undefined) updateData.order = order;

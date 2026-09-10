@@ -42,7 +42,12 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get("difficulty");
     const questionType = searchParams.get("questionType");
 
-    const where: { isActive?: boolean; topicId?: string; difficulty?: string; questionType?: string } = { isActive: true };
+    const where: {
+      isActive?: boolean;
+      topicId?: string;
+      difficulty?: string;
+      questionType?: string;
+    } = { isActive: true };
 
     if (topicId) {
       where.topicId = topicId;
@@ -131,14 +136,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const {
-      topicId,
-      content,
-      difficulty,
-      questionType,
-      explanation,
-      tags,
-    } = validation.data;
+    const { topicId, content, difficulty, questionType, explanation, tags } =
+      validation.data;
 
     // Verify topic exists
     const topic = await prisma.topic.findUnique({
