@@ -125,7 +125,8 @@ describe("Question System", () => {
       const sanitizeForStudent = (question: typeof mockQuestion) => ({
         ...question,
         options: question.options?.map((opt) => {
-          const { isCorrect: _, ...rest } = opt;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { isCorrect: _isCorrect, ...rest } = opt;
           return rest;
         }),
       });
@@ -140,7 +141,8 @@ describe("Question System", () => {
       const sanitizeForStudent = (question: typeof mockQuestion) => ({
         ...question,
         options: question.options?.map((opt) => {
-          const { isCorrect: _, ...rest } = opt;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { isCorrect: _isCorrect, ...rest } = opt;
           return rest;
         }),
       });
