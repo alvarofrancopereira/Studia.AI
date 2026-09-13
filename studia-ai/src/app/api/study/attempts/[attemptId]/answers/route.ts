@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth-helpers';
-import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth-helpers";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 const submitAnswerSchema = z.object({
   questionId: z.string().uuid(),
@@ -16,27 +16,27 @@ const submitAnswerSchema = z.object({
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ attemptId: string }> }
+  { params }: { params: Promise<{ attemptId: string }> },
 ) {
   try {
     const session = await auth();
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: 'Unauthorized. Please log in.' },
-        { status: 401 }
+        { error: "Unauthorized. Please log in." },
+        { status: 401 },
       );
     }
 
     const studentId = session.user.id;
     const { attemptId } = await params;
     const body = await request.json();
-    
+
     const validation = submitAnswerSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.errors },
-        { status: 400 }
+        { error: "Invalid input", details: validation.error.errors },
+        { status: 400 },
       );
     }
 
@@ -55,16 +55,16 @@ export async function POST(
 
     if (!attempt) {
       return NextResponse.json(
-        { error: 'Study attempt not found or access denied' },
-        { status: 404 }
+        { error: "Study attempt not found or access denied" },
+        { status: 404 },
       );
     }
 
     // Check if attempt is still in progress
-    if (attempt.status !== 'IN_PROGRESS') {
+    if (attempt.status !== "IN_PROGRESS") {
       return NextResponse.json(
-        { error: 'Cannot submit answers to a completed or abandoned attempt' },
-        { status: 400 }
+        { error: "Cannot submit answers to a completed or abandoned attempt" },
+        { status: 400 },
       );
     }
 
@@ -82,8 +82,8 @@ export async function POST(
 
     if (!question) {
       return NextResponse.json(
-        { error: 'Question not found or does not belong to this topic' },
-        { status: 404 }
+        { error: "Question not found or does not belong to this topic" },
+        { status: 404 },
       );
     }
 
@@ -97,8 +97,8 @@ export async function POST(
 
     if (existingAnswer) {
       return NextResponse.json(
-        { error: 'Answer already submitted for this question' },
-        { status: 400 }
+        { error: "Answer already submitted for this question" },
+        { status: 400 },
       );
     }
 
@@ -108,11 +108,16 @@ export async function POST(
     let points = 0;
     let finalSelectedOptionId: string | null = null;
 
-    if (question.questionType === 'multiple_choice' || question.questionType === 'true_false') {
+    if (
+      question.questionType === "multiple_choice" ||
+      question.questionType === "true_false"
+    ) {
       if (!selectedOptionId) {
         return NextResponse.json(
-          { error: 'selectedOptionId is required for multiple choice questions' },
-          { status: 400 }
+          {
+            error: "selectedOptionId is required for multiple choice questions",
+          },
+          { status: 400 },
         );
       }
 
@@ -126,23 +131,26 @@ export async function POST(
 
       if (!selectedOption) {
         return NextResponse.json(
-          { error: 'Invalid option selected' },
-          { status: 400 }
+          { error: "Invalid option selected" },
+          { status: 400 },
         );
       }
 
       finalSelectedOptionId = selectedOptionId;
-      
+
       // Server determines correctness based on the option's isCorrect flag
       isCorrect = selectedOption.isCorrect;
-      
+
       // Points: 1 for correct, 0 for incorrect (can be adjusted based on difficulty)
       points = isCorrect ? 1 : 0;
-    } else if (question.questionType === 'short_answer' || question.questionType === 'open_ended') {
+    } else if (
+      question.questionType === "short_answer" ||
+      question.questionType === "open_ended"
+    ) {
       if (!answerText) {
         return NextResponse.json(
-          { error: 'answerText is required for open-ended questions' },
-          { status: 400 }
+          { error: "answerText is required for open-ended questions" },
+          { status: 400 },
         );
       }
 
@@ -193,9 +201,10 @@ export async function POST(
     const totalQuestions = allAnswers.length;
     const correctCount = allAnswers.filter((a) => a.isCorrect).length;
     const totalPoints = allAnswers.reduce((sum, a) => sum + a.points, 0);
-    
+
     // Score percentage based on correct answers
-    const score = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+    const score =
+      totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
 
     return NextResponse.json({
       answer: {
@@ -214,10 +223,10 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error('Error submitting answer:', error);
+    console.error("Error submitting answer:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

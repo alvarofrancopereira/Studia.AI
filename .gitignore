@@ -2,12 +2,6 @@
 # Dependencies
 node_modules/
 
-# Build outputs
-dist/
-build/
-.next/
-out/
-
 # Environment variables
 .env
 .env.local
@@ -16,26 +10,36 @@ out/
 # IDE files
 .vscode/
 .idea/
-*.swp
-*.swo
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build outputs
+dist/
+build/
+.next/
+out/
 
 # Logs
 *.log
 
-# Temp files
+# Temporary files
 *.tmp
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Database
-prisma/migrations/
-*.db
-*.db-journal
+*.swp
+*.swo
 
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Local configuration
+.env.local
 ```

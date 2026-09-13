@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth-helpers';
-import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth-helpers";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 const createAttemptSchema = z.object({
   topicId: z.string().uuid(),
@@ -14,22 +14,22 @@ const createAttemptSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: 'Unauthorized. Please log in.' },
-        { status: 401 }
+        { error: "Unauthorized. Please log in." },
+        { status: 401 },
       );
     }
 
     const studentId = session.user.id;
     const body = await request.json();
-    
+
     const validation = createAttemptSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.errors },
-        { status: 400 }
+        { error: "Invalid input", details: validation.error.errors },
+        { status: 400 },
       );
     }
 
@@ -44,10 +44,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!topic) {
-      return NextResponse.json(
-        { error: 'Topic not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Topic not found" }, { status: 404 });
     }
 
     // For now, allow any authenticated user to study any topic
@@ -61,10 +58,10 @@ export async function POST(request: NextRequest) {
       },
       include: {
         options: {
-          orderBy: { order: 'asc' },
+          orderBy: { order: "asc" },
         },
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: "asc" },
     });
 
     // Create the study attempt
@@ -72,7 +69,7 @@ export async function POST(request: NextRequest) {
       data: {
         studentId,
         topicId,
-        status: 'IN_PROGRESS',
+        status: "IN_PROGRESS",
       },
       include: {
         topic: {
@@ -108,10 +105,10 @@ export async function POST(request: NextRequest) {
       questions: sanitizedQuestions,
     });
   } catch (error) {
-    console.error('Error creating study attempt:', error);
+    console.error("Error creating study attempt:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
@@ -123,11 +120,11 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const session = await auth();
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: 'Unauthorized. Please log in.' },
-        { status: 401 }
+        { error: "Unauthorized. Please log in." },
+        { status: 401 },
       );
     }
 
@@ -157,10 +154,10 @@ export async function GET() {
               },
             },
           },
-          orderBy: { answeredAt: 'asc' },
+          orderBy: { answeredAt: "asc" },
         },
       },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
     });
 
     const formattedAttempts = attempts.map((attempt) => ({
@@ -176,10 +173,10 @@ export async function GET() {
 
     return NextResponse.json({ attempts: formattedAttempts });
   } catch (error) {
-    console.error('Error fetching study attempts:', error);
+    console.error("Error fetching study attempts:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth-helpers';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth-helpers";
+import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/study/progress
@@ -9,23 +9,23 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: 'Unauthorized. Please log in.' },
-        { status: 401 }
+        { error: "Unauthorized. Please log in." },
+        { status: 401 },
       );
     }
 
     const studentId = session.user.id;
     const { searchParams } = new URL(request.url);
-    const topicId = searchParams.get('topicId');
+    const topicId = searchParams.get("topicId");
 
     // Get overall statistics
     const [attemptStats, masteryRecords] = await Promise.all([
       // Attempt statistics
       prisma.studyAttempt.groupBy({
-        by: ['status'],
+        by: ["status"],
         where: { studentId },
         _count: true,
         _avg: {
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: { lastStudied: 'desc' },
+        orderBy: { lastStudied: "desc" },
       }),
     ]);
 
@@ -57,16 +57,20 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
     });
 
     // Format statistics
     const stats = {
       totalAttempts: attemptStats.reduce((sum, s) => sum + s._count, 0),
-      inProgress: attemptStats.find((s) => s.status === 'IN_PROGRESS')?._count || 0,
-      completed: attemptStats.find((s) => s.status === 'COMPLETED')?._count || 0,
-      abandoned: attemptStats.find((s) => s.status === 'ABANDONED')?._count || 0,
-      averageScore: attemptStats.find((s) => s.status === 'COMPLETED')?._avg.score || 0,
+      inProgress:
+        attemptStats.find((s) => s.status === "IN_PROGRESS")?._count || 0,
+      completed:
+        attemptStats.find((s) => s.status === "COMPLETED")?._count || 0,
+      abandoned:
+        attemptStats.find((s) => s.status === "ABANDONED")?._count || 0,
+      averageScore:
+        attemptStats.find((s) => s.status === "COMPLETED")?._avg.score || 0,
       topicsStudied: masteryRecords.length,
     };
 
@@ -86,21 +90,26 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: { startedAt: 'desc' },
+        orderBy: { startedAt: "desc" },
       });
 
-      const completedAttempts = topicAttempts.filter((a) => a.status === 'COMPLETED');
-      
+      const completedAttempts = topicAttempts.filter(
+        (a) => a.status === "COMPLETED",
+      );
+
       topicProgress = {
         topicId,
         totalAttempts: topicAttempts.length,
         completedAttempts: completedAttempts.length,
-        bestScore: completedAttempts.length > 0 
-          ? Math.max(...completedAttempts.map((a) => a.score || 0)) 
-          : 0,
-        averageScore: completedAttempts.length > 0
-          ? completedAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / completedAttempts.length
-          : 0,
+        bestScore:
+          completedAttempts.length > 0
+            ? Math.max(...completedAttempts.map((a) => a.score || 0))
+            : 0,
+        averageScore:
+          completedAttempts.length > 0
+            ? completedAttempts.reduce((sum, a) => sum + (a.score || 0), 0) /
+              completedAttempts.length
+            : 0,
         lastAttemptDate: topicAttempts[0]?.startedAt || null,
       };
     }
@@ -126,10 +135,10 @@ export async function GET(request: NextRequest) {
       topicProgress,
     });
   } catch (error) {
-    console.error('Error fetching study progress:', error);
+    console.error("Error fetching study progress:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
