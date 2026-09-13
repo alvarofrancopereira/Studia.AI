@@ -47,6 +47,10 @@ model User {
   // Teacher relations
   subjects Subject[]
 
+  // Student relations (M6 Study Engine)
+  studyAttempts StudyAttempt[]
+  answerReviews Answer[]
+
   @@index([email])
   @@map("users")
 }
@@ -107,6 +111,9 @@ model Topic {
   puzzles        Puzzle[]
   masteryRecords UserTopicMastery[]
 
+  // M6 Study Engine - attempts by students
+  studyAttempts StudyAttempt[]
+
   @@index([subjectId])
   @@index([parentId])
   @@index([subjectId, parentId])
@@ -129,6 +136,9 @@ model Question {
 
   options QuestionOption[]
 
+  // M6 Study Engine - answers by students
+  answers Answer[]
+
   @@index([topicId])
   @@index([difficulty])
   @@index([questionType])
@@ -144,6 +154,9 @@ model QuestionOption {
   order       Int      @default(0)
   explanation String? // Specific explanation for this option
   createdAt   DateTime @default(now())
+
+  // M6 Study Engine - answers selected by students
+  answerReviews Answer[]
 
   @@index([questionId])
   @@map("question_options")
@@ -479,4 +492,57 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// ============================================
+// M6 - Study Engine Models
+// ============================================
+
+// Study attempt tracking
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model StudyAttempt {
+  id          String        @id @default(uuid())
+  studentId   String
+  student     User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topicId     String
+  topic       Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  startedAt   DateTime      @default(now())
+  completedAt DateTime?
+  score       Float? // Percentage score 0-100
+  status      AttemptStatus @default(IN_PROGRESS)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  answers Answer[]
+
+  @@index([studentId])
+  @@index([topicId])
+  @@index([studentId, status])
+  @@map("study_attempts")
+}
+
+model Answer {
+  id               String          @id @default(uuid())
+  attemptId        String
+  attempt          StudyAttempt    @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answerText       String? // For open-ended questions
+  selectedOptionId String? // For multiple choice questions
+  selectedOption   QuestionOption? @relation(fields: [selectedOptionId], references: [id])
+  isCorrect        Boolean
+  points           Float           @default(0)
+  answeredAt       DateTime        @default(now())
+  User             User?           @relation(fields: [userId], references: [id])
+  userId           String?
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+  @@map("answers")
 }
