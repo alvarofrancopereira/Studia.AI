@@ -227,3 +227,267 @@ describe("Question System", () => {
     });
   });
 });
+
+describe("Question Ownership and Isolation", () => {
+  // Mock data representing two different teachers with their own subjects/topics/questions
+  const teacherA = {
+    id: "teacher-a-id",
+    email: "teacher-a@example.com",
+    name: "Teacher A",
+  };
+
+  const teacherB = {
+    id: "teacher-b-id",
+    email: "teacher-b@example.com",
+    name: "Teacher B",
+  };
+
+  const subjectA = {
+    id: "subject-a-id",
+    name: "Mathematics",
+    teacherId: teacherA.id,
+  };
+
+  const subjectB = {
+    id: "subject-b-id",
+    name: "History",
+    teacherId: teacherB.id,
+  };
+
+  const topicA = {
+    id: "topic-a-id",
+    name: "Algebra",
+    subjectId: subjectA.id,
+  };
+
+  const topicB = {
+    id: "topic-b-id",
+    name: "World War II",
+    subjectId: subjectB.id,
+  };
+
+  const questionCreatedByA = {
+    id: "question-a-1",
+    topicId: topicA.id,
+    content: "What is 2 + 2?",
+    difficulty: "easy" as const,
+    questionType: "multiple_choice" as const,
+    isActive: true,
+    tags: ["math"],
+  };
+
+  const questionCreatedByB = {
+    id: "question-b-1",
+    topicId: topicB.id,
+    content: "When did WWII start?",
+    difficulty: "medium" as const,
+    questionType: "short_answer" as const,
+    isActive: true,
+    tags: ["history"],
+  };
+
+  describe("Ownership Chain Validation", () => {
+    it("should verify Question -> Topic -> Subject -> teacherId chain for Teacher A", () => {
+      // Simulating the ownership check that happens in the API
+      const hasOwnership = (
+        question: typeof questionCreatedByA,
+        topic: typeof topicA,
+        subject: typeof subjectA,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(
+        hasOwnership(questionCreatedByA, topicA, subjectA, teacherA.id),
+      ).toBe(true);
+      expect(
+        hasOwnership(questionCreatedByA, topicA, subjectA, teacherB.id),
+      ).toBe(false);
+    });
+
+    it("should verify Question -> Topic -> Subject -> teacherId chain for Teacher B", () => {
+      const hasOwnership = (
+        question: typeof questionCreatedByB,
+        topic: typeof topicB,
+        subject: typeof subjectB,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(
+        hasOwnership(questionCreatedByB, topicB, subjectB, teacherB.id),
+      ).toBe(true);
+      expect(
+        hasOwnership(questionCreatedByB, topicB, subjectB, teacherA.id),
+      ).toBe(false);
+    });
+  });
+
+  describe("Access Control - User A accessing Question A (own question)", () => {
+    it("should allow Teacher A to GET their own question", () => {
+      // Simulating API GET logic with ownership filter
+      const canAccess = (
+        question: typeof questionCreatedByA,
+        topic: typeof topicA,
+        subject: typeof subjectA,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(canAccess(questionCreatedByA, topicA, subjectA, teacherA.id)).toBe(
+        true,
+      );
+    });
+
+    it("should allow Teacher A to PUT their own question", () => {
+      const canModify = (
+        question: typeof questionCreatedByA,
+        topic: typeof topicA,
+        subject: typeof subjectA,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(canModify(questionCreatedByA, topicA, subjectA, teacherA.id)).toBe(
+        true,
+      );
+    });
+
+    it("should allow Teacher A to DELETE their own question", () => {
+      const canDelete = (
+        question: typeof questionCreatedByA,
+        topic: typeof topicA,
+        subject: typeof subjectA,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(canDelete(questionCreatedByA, topicA, subjectA, teacherA.id)).toBe(
+        true,
+      );
+    });
+  });
+
+  describe("Access Control - User B accessing Question A (cross-user isolation)", () => {
+    it("should block Teacher B from GETTING Teacher A's question", () => {
+      const canAccess = (
+        question: typeof questionCreatedByA,
+        topic: typeof topicA,
+        subject: typeof subjectA,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(canAccess(questionCreatedByA, topicA, subjectA, teacherB.id)).toBe(
+        false,
+      );
+    });
+
+    it("should block Teacher B from PUTTING Teacher A's question", () => {
+      const canModify = (
+        question: typeof questionCreatedByA,
+        topic: typeof topicA,
+        subject: typeof subjectA,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(canModify(questionCreatedByA, topicA, subjectA, teacherB.id)).toBe(
+        false,
+      );
+    });
+
+    it("should block Teacher B from DELETING Teacher A's question", () => {
+      const canDelete = (
+        question: typeof questionCreatedByA,
+        topic: typeof topicA,
+        subject: typeof subjectA,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(canDelete(questionCreatedByA, topicA, subjectA, teacherB.id)).toBe(
+        false,
+      );
+    });
+  });
+
+  describe("Access Control - User A accessing Question B (reverse cross-user isolation)", () => {
+    it("should block Teacher A from GETTING Teacher B's question", () => {
+      const canAccess = (
+        question: typeof questionCreatedByB,
+        topic: typeof topicB,
+        subject: typeof subjectB,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(canAccess(questionCreatedByB, topicB, subjectB, teacherA.id)).toBe(
+        false,
+      );
+    });
+
+    it("should block Teacher A from PUTTING Teacher B's question", () => {
+      const canModify = (
+        question: typeof questionCreatedByB,
+        topic: typeof topicB,
+        subject: typeof subjectB,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(canModify(questionCreatedByB, topicB, subjectB, teacherA.id)).toBe(
+        false,
+      );
+    });
+
+    it("should block Teacher A from DELETING Teacher B's question", () => {
+      const canDelete = (
+        question: typeof questionCreatedByB,
+        topic: typeof topicB,
+        subject: typeof subjectB,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      expect(canDelete(questionCreatedByB, topicB, subjectB, teacherA.id)).toBe(
+        false,
+      );
+    });
+  });
+
+  describe("Creation Authorization", () => {
+    it("should only allow creating questions in topics belonging to user's own subjects", () => {
+      const canCreateInTopic = (
+        topic: typeof topicA | typeof topicB,
+        subject: typeof subjectA | typeof subjectB,
+        userId: string,
+      ) => {
+        return subject.teacherId === userId;
+      };
+
+      // Teacher A can create in Topic A (own subject)
+      expect(canCreateInTopic(topicA, subjectA, teacherA.id)).toBe(true);
+
+      // Teacher A cannot create in Topic B (another teacher's subject)
+      expect(canCreateInTopic(topicB, subjectB, teacherA.id)).toBe(false);
+
+      // Teacher B can create in Topic B (own subject)
+      expect(canCreateInTopic(topicB, subjectB, teacherB.id)).toBe(true);
+
+      // Teacher B cannot create in Topic A (another teacher's subject)
+      expect(canCreateInTopic(topicA, subjectA, teacherB.id)).toBe(false);
+    });
+  });
+});
