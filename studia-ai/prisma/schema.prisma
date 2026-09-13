@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -64,7 +64,7 @@ model Profile {
   totalXP       Int      @default(0)
   level         Int      @default(1)
   timezone      String?  @default("UTC")
-  preferences   Json? // User preferences (theme, notifications, etc.)
+  preferences   String? // User preferences (theme, notifications, etc.) - stored as JSON string
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -129,7 +129,7 @@ model Question {
   difficulty   String   @default("medium") // easy, medium, hard
   questionType String   @default("multiple_choice") // multiple_choice, true_false, short_answer, open_ended, matching, ordering
   explanation  String? // Explanation for the correct answer
-  tags         String[] // Tags for categorization
+  tags         String  // Tags for categorization (comma-separated)
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -167,7 +167,7 @@ model Quiz {
   id           String   @id @default(uuid())
   title        String
   description  String?
-  topicIds     String[] // Topics included in this quiz
+  topicIds     String  // Topics included in this quiz (comma-separated)
   difficulty   String   @default("medium")
   timeLimit    Int? // Time limit in seconds
   passingScore Int      @default(70) // Percentage required to pass
@@ -225,7 +225,7 @@ model StudySession {
   activityType String // puzzle, question, flashcard, explanation, simulation
   duration     Int // Duration in seconds
   completed    Boolean  @default(false)
-  performance  Json? // Performance metrics
+  performance  String? // Performance metrics (stored as JSON string)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -238,7 +238,7 @@ model StudyActivity {
   id        String   @id @default(uuid())
   sessionId String
   type      String // question_answered, puzzle_completed, flashcard_reviewed, etc.
-  data      Json // Activity-specific data
+  data      String? // Activity-specific data (stored as JSON string)
   result    String? // success, failure, partial
   createdAt DateTime @default(now())
 
@@ -299,7 +299,7 @@ model StudyPlan {
   startDate   DateTime
   endDate     DateTime?
   dailyTime   Int // Recommended daily time in minutes
-  priorities  Json? // Priority topics with reasoning
+  priorities  String? // Priority topics with reasoning (stored as JSON string)
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -315,8 +315,8 @@ model Flashcard {
   topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
   front     String // Question/prompt
   back      String // Answer
-  hints     String[] // Optional hints
-  tags      String[]
+  hints     String? // Optional hints (comma-separated)
+  tags      String? // Tags (comma-separated)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -352,8 +352,8 @@ model Puzzle {
   topicId      String
   topic        Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
   puzzleType   String // completion, ordering, matching, true_false, find_error, find_premise, choose_conclusion, relate_concepts, classification
-  content      Json // Puzzle content (structure depends on type)
-  solution     Json // Solution data
+  content      String // Puzzle content (stored as JSON string)
+  solution     String // Solution data (stored as JSON string)
   difficulty   String   @default("medium")
   explanation  String?
   timeEstimate Int? // Estimated time in seconds
@@ -373,7 +373,7 @@ model Achievement {
   description String
   icon        String?
   category    String // milestone, streak, mastery, speed, consistency
-  requirement Json // Requirements to unlock
+  requirement String? // Requirements to unlock (stored as JSON string)
   xpReward    Int      @default(0)
   createdAt   DateTime @default(now())
 
@@ -459,12 +459,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -495,28 +495,22 @@ model VerificationToken {
 }
 
 // ============================================
-// M6 - Study Engine Models
+// M6 - Study Engine Models (SQLite compatible)
 // ============================================
 
-// Study attempt tracking
-enum AttemptStatus {
-  IN_PROGRESS
-  COMPLETED
-  ABANDONED
-}
-
+// Study attempt tracking - status stored as string
 model StudyAttempt {
-  id          String        @id @default(uuid())
+  id          String   @id @default(uuid())
   studentId   String
-  student     User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
   topicId     String
-  topic       Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  startedAt   DateTime      @default(now())
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  startedAt   DateTime @default(now())
   completedAt DateTime?
   score       Float? // Percentage score 0-100
-  status      AttemptStatus @default(IN_PROGRESS)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  status      String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ABANDONED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   answers Answer[]
 
