@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
         difficulty,
         questionType,
         explanation,
-        tags,
+        tags: tags.join(","),
       },
       include: {
         topic: {

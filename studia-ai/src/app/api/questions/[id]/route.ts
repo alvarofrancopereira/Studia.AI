@@ -137,14 +137,14 @@ export async function PUT(
       difficulty?: string;
       questionType?: string;
       explanation?: string;
-      tags?: string[];
+      tags?: string;
       isActive?: boolean;
     } = {};
     if (content !== undefined) updateData.content = content;
     if (difficulty !== undefined) updateData.difficulty = difficulty;
     if (questionType !== undefined) updateData.questionType = questionType;
     if (explanation !== undefined) updateData.explanation = explanation;
-    if (tags !== undefined) updateData.tags = tags;
+    if (tags !== undefined) updateData.tags = tags.join(",");
     if (isActive !== undefined) updateData.isActive = isActive;
 
     const question = await prisma.question.update({
