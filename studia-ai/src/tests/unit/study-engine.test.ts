@@ -179,8 +179,9 @@ describe("M6 Study Engine - Business Logic", () => {
         // isCorrect is NOT included
       }));
 
+      // Verify that the sanitized options don't include isCorrect
       sanitizedOptions.forEach((opt) => {
-        expect(opt.isCorrect).toBeUndefined();
+        expect("isCorrect" in opt).toBe(false);
       });
     });
   });

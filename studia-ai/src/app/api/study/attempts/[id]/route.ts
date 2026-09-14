@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import type { StudyAttemptUpdateInput } from "@prisma/client";
 
 /**
  * GET /api/study/attempts/[id]
@@ -160,7 +159,11 @@ export async function PUT(
     }
 
     // Build update data
-    const updateData: StudyAttemptUpdateInput = {};
+    const updateData: {
+      status?: string;
+      completedAt?: Date;
+      score?: number | null;
+    } = {};
 
     if (status) {
       updateData.status = status;
