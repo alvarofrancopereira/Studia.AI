@@ -1,8 +1,69 @@
 ```
-# Database files
-**/dev.db
-**/dev.db-journal
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
 
 # Environment variables
+.env
 .env.local
+*.env.*
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database
+prisma/migrations/
+*.db
+*.db-journal
+
+# Cache directories
+.cache/
+.tmp/
+temp/
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Python specific (if applicable)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info/
+.eggs/
+
+# Node.js specific (if applicable)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Compiled Binary Files
+*.exe
+*.dll
+*.so
+*.dylib
+*.class
+*.o
+*.a
+*.obj
+*.out
 ```

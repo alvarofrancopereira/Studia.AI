@@ -51,6 +51,9 @@ model User {
   studyAttempts StudyAttempt[]
   answerReviews Answer[]
 
+  // M7 Diagnostic Assessment relations
+  diagnosticAttempts DiagnosticAttempt[]
+
   @@index([email])
   @@map("users")
 }
@@ -114,6 +117,9 @@ model Topic {
   // M6 Study Engine - attempts by students
   studyAttempts StudyAttempt[]
 
+  // M7 Diagnostic Assessment - diagnostic attempts
+  diagnosticAttempts DiagnosticAttempt[]
+
   @@index([subjectId])
   @@index([parentId])
   @@index([subjectId, parentId])
@@ -139,6 +145,9 @@ model Question {
   // M6 Study Engine - answers by students
   answers Answer[]
 
+  // M7 Diagnostic Assessment - diagnostic questions
+  diagnosticQuestions DiagnosticQuestion[]
+
   @@index([topicId])
   @@index([difficulty])
   @@index([questionType])
@@ -157,6 +166,9 @@ model QuestionOption {
 
   // M6 Study Engine - answers selected by students
   answerReviews Answer[]
+
+  // M7 Diagnostic Assessment - diagnostic question selections
+  diagnosticQuestionSelections DiagnosticQuestion[]
 
   @@index([questionId])
   @@map("question_options")
@@ -532,11 +544,61 @@ model Answer {
   isCorrect        Boolean
   points           Float           @default(0)
   answeredAt       DateTime        @default(now())
-  User             User?           @relation(fields: [userId], references: [id])
   userId           String?
+  user             User?           @relation(fields: [userId], references: [id])
 
   @@unique([attemptId, questionId])
   @@index([attemptId])
   @@index([questionId])
   @@map("answers")
+}
+
+// ============================================
+// M7 - Diagnostic Assessment Models
+// ============================================
+
+// Diagnostic attempt for baseline knowledge assessment
+model DiagnosticAttempt {
+  id            String   @id @default(uuid())
+  studentId     String
+  student       User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topicId       String
+  topic         Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  totalQuestions Int
+  correctAnswers Int     @default(0)
+  score         Float? // Percentage score 0-100
+  status        String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  baselineLevel String   @default("UNKNOWN") // UNKNOWN, BEGINNER, INTERMEDIATE, ADVANCED
+  strengths     String? // JSON array of strength areas
+  weaknesses    String? // JSON array of weakness areas
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  questions DiagnosticQuestion[]
+
+  @@index([studentId])
+  @@index([topicId])
+  @@index([studentId, status])
+  @@map("diagnostic_attempts")
+}
+
+model DiagnosticQuestion {
+  id              String           @id @default(uuid())
+  attemptId       String
+  attempt         DiagnosticAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId      String
+  question        Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  order           Int              @default(0)
+  selectedOptionId String?
+  selectedOption  QuestionOption?  @relation(fields: [selectedOptionId], references: [id])
+  isCorrect       Boolean          @default(false)
+  timeSpent       Int              @default(0) // Time spent in seconds
+  answeredAt      DateTime         @default(now())
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+  @@map("diagnostic_questions")
 }
